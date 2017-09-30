@@ -11,7 +11,7 @@ using Castle.Windsor;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace WindsorTests
+namespace WindsorTests.LifesStyle
 {
     #region TestStructures
     #region Identity Tracking
