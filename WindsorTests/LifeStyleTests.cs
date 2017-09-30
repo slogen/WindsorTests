@@ -173,7 +173,7 @@ namespace WindsorTests
 
     #endregion
 
-    public class WindsorTest
+    public class LifeStyleWindsorTest
     {
         [Test]
         public void TestLifetimeBoundTo()
@@ -187,7 +187,7 @@ namespace WindsorTests
         private void TestLifetimeBoundTo(IWindsorContainer cw) {
             cw.Register(
                 Component.For<IA, IB>().ImplementedBy<C>().Named("C")
-                    .LifeStyle.BoundToFirstType().InOrder<IDep<IA>,DepAb,IX>(),
+                    .LifeStyle.BoundToAny().OfType<IDep<IA>,DepAb,IX>(),
                 Component.For<IA>().ImplementedBy<A>().Named("A").LifestyleTransient(),
                 Component.For<IB>().ImplementedBy<B>().Named("B").LifestyleBoundTo<IDep<IB>>(),
                 Component.For<IDep<IA>>().ImplementedBy<DepA>().LifestyleTransient().Named("DA"),
@@ -227,6 +227,30 @@ namespace WindsorTests
         }
     }
 
+    interface IOuter
+    {
+        IA AOuter { get; }
+    }
+
+    interface IInner1
+    {
+        IA AInner1 { get; }
+    }
+    interface IInner2
+    {
+        IA AInner1 { get; }
+    }
+
+    class Outer: IOuter
+    {
+        public Outer(IA aOuter)
+        {
+            AOuter = aOuter;
+        }
+
+        public IA AOuter { get; }
+    }
+
     internal static class WindsorTestExtensions
     {
         public static void ResolveAndCount<T>(this IWindsorContainer cw, Action<T> act, int expectCount)
@@ -262,8 +286,22 @@ namespace WindsorTests
     {
         private static IHandler FirstMatchingScopeRootSelector(this IEnumerable<Type> types, IHandler[] resolutionStack)
         {
-            return resolutionStack
-                .FirstOrDefault(h => types.Any(t => t.GetTypeInfo().IsAssignableFrom((TypeInfo) h.ComponentModel.Implementation)));
+            var selected = types.SelectMany((t, ti) =>
+                    resolutionStack.Select(
+                            (h, hi) =>
+                                new
+                                {
+                                    h,
+                                    hi,
+                                    ti,
+                                    canApply =
+                                    t.GetTypeInfo().IsAssignableFrom((TypeInfo) h.ComponentModel.Implementation)
+                                })
+                        .Where(x => x.canApply))
+                .OrderBy(x => x.hi)
+                .ThenBy(x => x.ti)
+                .FirstOrDefault();
+            return selected?.h;
         }
 
         public class BoundToAnyCapture<T> where T : class
@@ -280,26 +318,26 @@ namespace WindsorTests
                 return LifeStyleGroup.BoundTo(_types.FirstMatchingScopeRootSelector);
             }
 
-            public BoundToAnyCapture<T> Then(Type t)
+            public BoundToAnyCapture<T> Or(Type t)
             {
                 _types.Add(t);
                 return this;
             }
 
-            public BoundToAnyCapture<T> Then<TBound>() => Then(typeof(TBound));
+            public BoundToAnyCapture<T> Or<TBound>() => Or(typeof(TBound));
 
-            public ComponentRegistration<T> InOrder(params Type[] types)
+            public ComponentRegistration<T> OfType(params Type[] types)
             {
                 foreach (var type in types)
-                    Then(type);
+                    Or(type);
                 return Final();
             }
-            public ComponentRegistration<T> InOrder<TBound1>() => Then<TBound1>().Final();
-            public ComponentRegistration<T> InOrder<TBound1, TBound2>() => Then<TBound1>().Then<TBound2>().Final();
-            public ComponentRegistration<T> InOrder<TBound1, TBound2, TBound3>() => Then<TBound1>().Then<TBound2>().Then<TBound3>().Final();
+            public ComponentRegistration<T> OfType<TBound1>() => Or<TBound1>().Final();
+            public ComponentRegistration<T> OfType<TBound1, TBound2>() => Or<TBound1>().Or<TBound2>().Final();
+            public ComponentRegistration<T> OfType<TBound1, TBound2, TBound3>() => Or<TBound1>().Or<TBound2>().Or<TBound3>().Final();
         }
 
-        public static BoundToAnyCapture<T>  BoundToFirstType<T>(
+        public static BoundToAnyCapture<T>  BoundToAny<T>(
             this LifestyleGroup<T> lifestyleGroup)
             where T: class
         {
