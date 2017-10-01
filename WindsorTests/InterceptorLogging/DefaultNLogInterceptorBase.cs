@@ -9,18 +9,24 @@ namespace WindsorTests.InterceptorLogging
     {
         protected override FormattableString EntryLogMessage(TKey callId, IInvocation invocation)
         {
+            if (ReferenceEquals(invocation, null))
+                throw new ArgumentNullException(nameof(invocation));
             return $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments)})";
         }
 
         protected override FormattableString ReturnLogMessage(TKey callId, DateTime startTime, IInvocation invocation,
             object value)
         {
+            if (ReferenceEquals(invocation, null))
+                throw new ArgumentNullException(nameof(invocation));
             return $"[{callId}] {invocation.Method.Name}(...) = {value}";
         }
 
         protected override FormattableString ExceptionLogMessage(TKey callId, DateTime startTime, IInvocation invocation,
             Exception ex)
         {
+            if (ReferenceEquals(invocation, null))
+                throw new ArgumentNullException(nameof(invocation));
             return
                 $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments)}): {ExtractMessage(ex)}";
         }
@@ -38,6 +44,8 @@ namespace WindsorTests.InterceptorLogging
 
         protected static FormattableString ExtractAggregateException(AggregateException ex)
         {
+            if (ReferenceEquals(ex, null))
+                throw new ArgumentNullException(nameof(ex));
             return $"{ex.Message} ({string.Join(", ", ex.InnerExceptions.Select(ExtractMessage))})";
         }
 
@@ -46,8 +54,9 @@ namespace WindsorTests.InterceptorLogging
 
         protected static FormattableString ExtractMessage(Exception ex)
         {
-            if (ex is AggregateException)
-                return ExtractAggregateException((AggregateException) ex);
+            var exception = ex as AggregateException;
+            if (exception != null)
+                return ExtractAggregateException(exception);
             return ExtractNormalException(ex);
         }
 

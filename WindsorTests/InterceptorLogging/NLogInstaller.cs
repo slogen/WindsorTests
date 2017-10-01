@@ -1,3 +1,4 @@
+using System;
 using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
@@ -6,17 +7,17 @@ namespace WindsorTests.InterceptorLogging
 {
     public class NLogInstaller : IWindsorInstaller
     {
-        public static NLogInstaller Default = new NLogInstaller();
+        public static readonly NLogInstaller Default = new NLogInstaller();
 
         public void Install(IWindsorContainer container, IConfigurationStore store)
         {
+            if (ReferenceEquals(container, null))
+                throw new ArgumentNullException(nameof(container));
             container.Register(
                 Component.For(typeof(ILogIdentityFactory<long>))
                     .ImplementedBy<LongIdentityFactory>()
                     .LifestyleSingleton().IsFallback().Named("DefaultLogIdentityFactory"),
-                Component.For(typeof(TypedIdentityFactory<,>))
-                    .LifestyleSingleton().IsFallback().Named("DefaultTypesIdentityFactory"),
-                Component.For(typeof(INLogInterceptor<>)).ImplementedBy(typeof(DefaultNLogInterceptor<>))
+                Component.For(typeof(INLogInterceptor)).ImplementedBy(typeof(DefaultNLogInterceptor<>))
                     .IsFallback().Named("DefaultNLogInterceptor")
             );
         }

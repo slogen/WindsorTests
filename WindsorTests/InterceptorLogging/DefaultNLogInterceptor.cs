@@ -14,8 +14,7 @@ namespace WindsorTests.InterceptorLogging
 
         private LogLevel _returnLogLevel;
 
-        public Func<TKey, DateTime, IInvocation, object, FormattableString> ReturnFormattableString;
-
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public DefaultNLogInterceptor(
             ILogIdentityFactory<TKey> keyFactory,
             ILogger logger = null,
@@ -37,6 +36,8 @@ namespace WindsorTests.InterceptorLogging
             ReturnFormattableString = returnLogMessage;
             ExceptionFormattableString = exceptionLogMessage;
         }
+
+        public Func<TKey, DateTime, IInvocation, object, FormattableString> ReturnFormattableString { get; set; }
 
         public override ILogger Logger
         {
@@ -84,6 +85,6 @@ namespace WindsorTests.InterceptorLogging
                 ? base.ExceptionLogMessage(callId, startTime, invocation, ex)
                 : ExceptionFormattableString(callId, startTime, invocation, ex);
 
-        protected override TKey MakeNextCallId() => KeyFactory.Next();
+        protected override TKey MakeNextCallId() => KeyFactory.NewId();
     }
 }

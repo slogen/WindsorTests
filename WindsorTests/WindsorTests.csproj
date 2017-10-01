@@ -24,6 +24,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>ExtendedDesignGuidelineRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -68,8 +69,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="InterceptorLogging\ILogIdentityFactory.cs" />
-    <Compile Include="InterceptorLogging\Tests\CompleteLoggingTets.cs" />
+    <Compile Include="InterceptorLogging\NLogConfigurator.cs" />
+    <Compile Include="InterceptorLogging\Tests\CompleteLoggingTests.cs" />
     <Compile Include="InterceptorLogging\DefaultNLogInterceptor.cs" />
     <Compile Include="InterceptorLogging\DefaultNLogInterceptorBase.cs" />
     <Compile Include="InterceptorLogging\IDefaultNLogInterceptor.cs" />
@@ -80,31 +83,30 @@
     <Compile Include="InterceptorLogging\NLogInterceptorDefaults.cs" />
     <Compile Include="InterceptorLogging\Tests\ConfigurationTests.cs" />
     <Compile Include="InterceptorLogging\TraceInterceptor.cs" />
-    <Compile Include="InterceptorLogging\TypedIdentityFactory.cs" />
-    <Compile Include="InterceptorLogging\TypedKey.cs" />
     <Compile Include="InterceptorLogging\WindsorNlogRegistration.cs" />
-    <Compile Include="LifesStyle\Tests\A.cs" />
-    <Compile Include="LifesStyle\Tests\B.cs" />
-    <Compile Include="LifesStyle\Tests\C.cs" />
-    <Compile Include="LifesStyle\Tests\Dep.cs" />
-    <Compile Include="LifesStyle\Tests\DepA.cs" />
-    <Compile Include="LifesStyle\Tests\DepAb.cs" />
-    <Compile Include="LifesStyle\Tests\DepB.cs" />
-    <Compile Include="LifesStyle\Tests\IA.cs" />
-    <Compile Include="LifesStyle\Tests\IB.cs" />
-    <Compile Include="LifesStyle\Tests\IDep.cs" />
-    <Compile Include="LifesStyle\Tests\IId.cs" />
-    <Compile Include="LifesStyle\Tests\IInner1.cs" />
-    <Compile Include="LifesStyle\Tests\IInner2.cs" />
-    <Compile Include="LifesStyle\Tests\IOuter.cs" />
-    <Compile Include="LifesStyle\Tests\IX.cs" />
-    <Compile Include="LifesStyle\Tests\IdTrack.cs" />
+    <Compile Include="Lifestyle\BoundToAnyCapture.cs" />
+    <Compile Include="Lifestyle\Tests\A.cs" />
+    <Compile Include="Lifestyle\Tests\B.cs" />
+    <Compile Include="Lifestyle\Tests\C.cs" />
+    <Compile Include="Lifestyle\Tests\DependentOn.cs" />
+    <Compile Include="Lifestyle\Tests\DependentOnA.cs" />
+    <Compile Include="Lifestyle\Tests\DepAb.cs" />
+    <Compile Include="Lifestyle\Tests\DependentOnB.cs" />
+    <Compile Include="Lifestyle\Tests\IA.cs" />
+    <Compile Include="Lifestyle\Tests\IB.cs" />
+    <Compile Include="Lifestyle\Tests\IDependentOn.cs" />
+    <Compile Include="Lifestyle\Tests\IId.cs" />
+    <Compile Include="Lifestyle\Tests\IInner1.cs" />
+    <Compile Include="Lifestyle\Tests\IInner2.cs" />
+    <Compile Include="Lifestyle\Tests\IOuter.cs" />
+    <Compile Include="Lifestyle\Tests\IX.cs" />
+    <Compile Include="Lifestyle\Tests\IdTrack.cs" />
     <Compile Include="InterceptorLogging\Tests\LoggingTests.cs" />
-    <Compile Include="LifesStyle\Tests\LifeStyleWindsorTest.cs" />
-    <Compile Include="LifesStyle\Tests\Outer.cs" />
-    <Compile Include="LifesStyle\WindsorExtensions.cs" />
-    <Compile Include="LifesStyle\Tests\WindsorTestExtensions.cs" />
-    <Compile Include="LifesStyle\Tests\X.cs" />
+    <Compile Include="Lifestyle\Tests\LifestyleWindsorTest.cs" />
+    <Compile Include="Lifestyle\Tests\Outer.cs" />
+    <Compile Include="Lifestyle\WindsorExtensions.cs" />
+    <Compile Include="Lifestyle\Tests\WindsorTestExtensions.cs" />
+    <Compile Include="Lifestyle\Tests\X.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@ using NLog.Fluent;
 
 namespace WindsorTests.InterceptorLogging
 {
-    public abstract class NLogInterceptorBase<TKey> : TraceInterceptor<TKey>, INLogInterceptor<TKey>
+    public abstract class NLogInterceptorBase<TKey> : TraceInterceptor<TKey>, INLogInterceptor
     {
         public abstract ILogger Logger { get; set; }
         public abstract LogLevel EntryLogLevel { get; set; }
@@ -20,7 +20,13 @@ namespace WindsorTests.InterceptorLogging
         protected abstract FormattableString ExceptionLogMessage(TKey callId, DateTime startTime, IInvocation invocation,
             Exception ex);
 
-        protected string MemberName(IInvocation invocation) => invocation.Method.Name;
+        protected string MemberName(IInvocation invocation)
+        {
+            if (ReferenceEquals(invocation, null))
+                throw new ArgumentNullException(nameof(invocation));
+            return invocation.Method.Name;
+        }
+
         protected string FilePath(IInvocation invocation) => null;
         protected int LineNumber(IInvocation invocation) => 0;
 

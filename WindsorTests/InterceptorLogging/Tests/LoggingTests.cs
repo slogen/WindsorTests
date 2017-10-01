@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using NLog;
@@ -8,12 +9,13 @@ using NUnit.Framework;
 
 namespace WindsorTests.InterceptorLogging.Tests
 {
+    [SuppressMessage("Microsoft.Design", "CA1001:TypesThatOwnDisposableFieldsShouldBeDisposable",
+        Justification = "Test manages disposables in SetUp/TearDown")]
     public class LoggingTests
     {
-        public IWindsorContainer Container;
-        protected ILogger Logger;
-
-        protected TestTarget Target;
+        protected IWindsorContainer Container { get; set; }
+        protected ILogger Logger { get; set; }
+        protected TestTarget Target { get; set; }
 
         [SetUp]
         public virtual void SetUp()
@@ -38,9 +40,9 @@ namespace WindsorTests.InterceptorLogging.Tests
             Container?.Dispose();
         }
 
-        public class TestTarget : Target
+        protected class TestTarget : Target
         {
-            public ICollection<LogEventInfo> LogEvents = new List<LogEventInfo>();
+            public ICollection<LogEventInfo> LogEvents { get; } = new List<LogEventInfo>();
 
             protected override void Write(LogEventInfo logEvent)
             {

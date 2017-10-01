@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace WindsorTests.LifesStyle.Tests
+namespace WindsorTests.Lifestyle.Tests
 {
 
     #region TestStructures
@@ -12,7 +12,7 @@ namespace WindsorTests.LifesStyle.Tests
     {
         private static long _nextId;
         private static long _totalDisposeCount;
-        private static long _totalUnDisposeCount;
+        private static long _totalUndisposeCount;
         private long _disposeCount;
         private long _noDisposeCount;
 
@@ -22,8 +22,8 @@ namespace WindsorTests.LifesStyle.Tests
             Id = NextId();
         }
 
-        public static long TotalDisposeCount => Interlocked.Read(ref _totalDisposeCount);
-        public static long TotalUnDisposeCount => Interlocked.Read(ref _totalUnDisposeCount);
+        public static long TotalDisposedCount => Interlocked.Read(ref _totalDisposeCount);
+        public static long TotalUndisposedCount => Interlocked.Read(ref _totalUndisposeCount);
 
         public void Dispose() => Dispose(true);
 
@@ -41,8 +41,8 @@ namespace WindsorTests.LifesStyle.Tests
             else
             {
                 var cnt = Interlocked.Increment(ref _noDisposeCount);
-                Interlocked.Increment(ref _totalUnDisposeCount);
-                Console.WriteLine("Missed DisposeCount: {0}", cnt);
+                Interlocked.Increment(ref _totalUndisposeCount);
+                Console.WriteLine("Missed Dispose Count: {0}", cnt);
             }
         }
 

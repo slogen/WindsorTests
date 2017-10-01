@@ -21,9 +21,10 @@ namespace WindsorTests.InterceptorLogging
             {
                 throw; // If ReactException returns true, then we rethrow and get on the stack
             }
-            if (invocation.ReturnValue is Task)
+            var value = invocation.ReturnValue as Task;
+            if (value != null)
             {
-                var task = (Task) invocation.ReturnValue;
+                var task = value;
                 task.ContinueWith(t =>
                 {
                     if (t.IsFaulted)

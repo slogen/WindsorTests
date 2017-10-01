@@ -3,7 +3,7 @@ using NLog;
 
 namespace WindsorTests.InterceptorLogging
 {
-    public interface INLogInterceptor<in TKey> : IInterceptor
+    public interface INLogInterceptor : IInterceptor
     {
         ILogger Logger { get; set; }
         LogLevel EntryLogLevel { get; set; }

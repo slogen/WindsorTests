@@ -2,17 +2,16 @@ using NLog;
 
 namespace WindsorTests.InterceptorLogging
 {
-    public class NLogInterceptorDefaults
+    public static class NLogInterceptorDefaults
     {
-        public static ILogger Logger = LogManager.GetLogger("LogInterceptor");
-
-        public static LogLevel LogLevel = LogLevel.Trace;
-
         private static LogLevel _defaultEntryLogLevel;
 
         private static LogLevel _defaultReturnLogLevel;
 
         private static LogLevel _defaultExceptionLogLevel = LogLevel.Error;
+        public static ILogger Logger { get; set; } = LogManager.GetLogger("LogInterceptor");
+
+        public static LogLevel LogLevel { get; set; } = LogLevel.Trace;
 
         public static LogLevel EntryLogLevel
         {

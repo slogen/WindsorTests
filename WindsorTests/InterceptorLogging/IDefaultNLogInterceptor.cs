@@ -3,7 +3,7 @@ using Castle.DynamicProxy;
 
 namespace WindsorTests.InterceptorLogging
 {
-    public interface IDefaultNLogInterceptor<TKey> : INLogInterceptor<TKey>
+    public interface IDefaultNLogInterceptor<TKey> : INLogInterceptor
     {
         Func<TKey, IInvocation, FormattableString> EntryFormattableString { get; set; }
         Func<TKey, DateTime, IInvocation, object, FormattableString> ReturnFormattableString { get; set; }

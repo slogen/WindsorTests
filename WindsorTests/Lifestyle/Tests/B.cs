@@ -1,4 +1,4 @@
-namespace WindsorTests.LifesStyle.Tests
+namespace WindsorTests.Lifestyle.Tests
 {
     class B : IdTrack, IB
     {

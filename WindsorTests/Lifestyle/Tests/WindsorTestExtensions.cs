@@ -2,7 +2,7 @@ using System;
 using Castle.Windsor;
 using FluentAssertions;
 
-namespace WindsorTests.LifesStyle.Tests
+namespace WindsorTests.Lifestyle.Tests
 {
     internal static class WindsorTestExtensions
     {
@@ -19,8 +19,8 @@ namespace WindsorTests.LifesStyle.Tests
         public static TResult ResolveAndCount<T, TResult>(this IWindsorContainer cw, Func<T, TResult> act,
             int expectCount)
         {
-            var td = IdTrack.TotalDisposeCount;
-            var ud = IdTrack.TotalUnDisposeCount;
+            var td = IdTrack.TotalDisposedCount;
+            var ud = IdTrack.TotalUndisposedCount;
             var t = cw.Resolve<T>();
             TResult result;
             try
@@ -31,8 +31,8 @@ namespace WindsorTests.LifesStyle.Tests
             {
                 cw.Release(t);
             }
-            IdTrack.TotalUnDisposeCount.Should().Be(ud);
-            IdTrack.TotalDisposeCount.Should().BeGreaterThan(td);
+            IdTrack.TotalUndisposedCount.Should().Be(ud);
+            IdTrack.TotalDisposedCount.Should().BeGreaterThan(td);
             return result;
         }
     }

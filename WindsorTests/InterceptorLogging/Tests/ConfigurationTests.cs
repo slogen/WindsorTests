@@ -38,7 +38,7 @@ namespace WindsorTests.InterceptorLogging.Tests
         [Test]
         public void LogLevelsShouldApplyWhenCallingThrowing()
         {
-            Action a = () => _foo.Throw();
+            Action a = () => _foo.DoThrow();
             a.ShouldThrow<Exception>();
             Target.LogEvents.ShouldBeEquivalentTo(new[]
             {
@@ -47,16 +47,16 @@ namespace WindsorTests.InterceptorLogging.Tests
             }, cfg => cfg.WithStrictOrdering().ExcludingMissingMembers());
         }
 
-        public class Foo
+        internal class Foo
         {
             public virtual int DoNothing()
             {
                 return 0;
             }
 
-            public virtual void Throw()
+            public virtual void DoThrow()
             {
-                throw new Exception();
+                throw new InvalidOperationException();
             }
         }
     }

@@ -3,36 +3,38 @@ using Castle.Windsor;
 using FluentAssertions;
 using NUnit.Framework;
 
-namespace WindsorTests.LifesStyle.Tests
+namespace WindsorTests.Lifestyle.Tests
 {
-    public class LifeStyleWindsorTest
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors")]
+    public class LifestyleWindsorTest
     {
         [Test]
-        public void TestLifetimeBoundTo()
+        public static void TestLifetimeBoundTo()
         {
-            var tu = IdTrack.TotalUnDisposeCount;
+            var tu = IdTrack.TotalUndisposedCount;
             using (var cw = new WindsorContainer())
             {
                 TestLifetimeBoundTo(cw);
             }
-            IdTrack.TotalUnDisposeCount.Should().Be(tu);
+            IdTrack.TotalUndisposedCount.Should().Be(tu);
         }
 
-        private void TestLifetimeBoundTo(IWindsorContainer cw)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
+        private static void TestLifetimeBoundTo(IWindsorContainer cw)
         {
             cw.Register(
                 Component.For<IA, IB>().ImplementedBy<C>().Named("C")
-                    .LifeStyle.BoundToAny().OfType<IDep<IA>, DepAb, IX>(),
+                    .LifeStyle.BoundToAny().OfType<IDependentOn<IA>, DepAb, IX>(),
                 Component.For<IA>().ImplementedBy<A>().Named("A").LifestyleTransient(),
-                Component.For<IB>().ImplementedBy<B>().Named("B").LifestyleBoundTo<IDep<IB>>(),
-                Component.For<IDep<IA>>().ImplementedBy<DepA>().LifestyleTransient().Named("DA"),
-                Component.For<IDep<IB>>().ImplementedBy<DepB>().LifestyleTransient().Named("DB")
+                Component.For<IB>().ImplementedBy<B>().Named("B").LifestyleBoundTo<IDependentOn<IB>>(),
+                Component.For<IDependentOn<IA>>().ImplementedBy<DependentOnA>().LifestyleTransient().Named("DA"),
+                Component.For<IDependentOn<IB>>().ImplementedBy<DependentOnB>().LifestyleTransient().Named("DB")
                     .DependsOn(ServiceOverride.ForKey<IB>().Eq("B")),
                 Component.For<DepAb>().LifestyleTransient(),
-                Component.For<IDep<IA>>().ImplementedBy<DepA>().LifestyleBoundTo<IX>().Named("DAIX"),
+                Component.For<IDependentOn<IA>>().ImplementedBy<DependentOnA>().LifestyleBoundTo<IX>().Named("DAIX"),
                 Component.For<IX>().ImplementedBy<X>()
                     .DependsOn(ServiceOverride.ForKey<IA>().Eq("A"))
-                    .DependsOn(ServiceOverride.ForKey<IDep<IA>>().Eq("DAIX"))
+                    .DependsOn(ServiceOverride.ForKey<IDependentOn<IA>>().Eq("DAIX"))
                     .LifestyleTransient()
             );
 
@@ -45,9 +47,9 @@ namespace WindsorTests.LifesStyle.Tests
 
             cw.ResolveAndCount((DepAb r) => r.A.Should().BeSameAs(r.B).And.NotBe(a1), 2);
 
-            cw.ResolveAndCount((IDep<IA> r) => r.Dependency.Should().BeOfType<C>(), 2);
+            cw.ResolveAndCount((IDependentOn<IA> r) => r.Dependency.Should().BeOfType<C>(), 2);
 
-            cw.ResolveAndCount((IDep<IB> r) => r.Dependency.Should().BeOfType<B>(), 2);
+            cw.ResolveAndCount((IDependentOn<IB> r) => r.Dependency.Should().BeOfType<B>(), 2);
 
             cw.ResolveAndCount((IX x) =>
                 {

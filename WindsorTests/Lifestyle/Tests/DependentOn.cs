@@ -1,9 +1,9 @@
-namespace WindsorTests.LifesStyle.Tests
+namespace WindsorTests.Lifestyle.Tests
 {
-    class Dep<T> : IdTrack, IDep<T>
+    class DependentOn<T> : IdTrack, IDependentOn<T>
         where T : IId
     {
-        protected Dep(T dependency)
+        protected DependentOn(T dependency)
         {
             Dependency = dependency;
         }
