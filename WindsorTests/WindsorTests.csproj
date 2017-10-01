@@ -68,8 +68,43 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LifesStyle\LifeStyleTests.cs" />
-    <Compile Include="InterceptorLogging\LoggingTests.cs" />
+    <Compile Include="InterceptorLogging\ILogIdentityFactory.cs" />
+    <Compile Include="InterceptorLogging\Tests\CompleteLoggingTets.cs" />
+    <Compile Include="InterceptorLogging\DefaultNLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\DefaultNLogInterceptorBase.cs" />
+    <Compile Include="InterceptorLogging\IDefaultNLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\INLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\LongIdentityFactory.cs" />
+    <Compile Include="InterceptorLogging\NLogInstaller.cs" />
+    <Compile Include="InterceptorLogging\NLogInterceptorBase.cs" />
+    <Compile Include="InterceptorLogging\NLogInterceptorDefaults.cs" />
+    <Compile Include="InterceptorLogging\Tests\ConfigurationTests.cs" />
+    <Compile Include="InterceptorLogging\TraceInterceptor.cs" />
+    <Compile Include="InterceptorLogging\TypedIdentityFactory.cs" />
+    <Compile Include="InterceptorLogging\TypedKey.cs" />
+    <Compile Include="InterceptorLogging\WindsorNlogRegistration.cs" />
+    <Compile Include="LifesStyle\Tests\A.cs" />
+    <Compile Include="LifesStyle\Tests\B.cs" />
+    <Compile Include="LifesStyle\Tests\C.cs" />
+    <Compile Include="LifesStyle\Tests\Dep.cs" />
+    <Compile Include="LifesStyle\Tests\DepA.cs" />
+    <Compile Include="LifesStyle\Tests\DepAb.cs" />
+    <Compile Include="LifesStyle\Tests\DepB.cs" />
+    <Compile Include="LifesStyle\Tests\IA.cs" />
+    <Compile Include="LifesStyle\Tests\IB.cs" />
+    <Compile Include="LifesStyle\Tests\IDep.cs" />
+    <Compile Include="LifesStyle\Tests\IId.cs" />
+    <Compile Include="LifesStyle\Tests\IInner1.cs" />
+    <Compile Include="LifesStyle\Tests\IInner2.cs" />
+    <Compile Include="LifesStyle\Tests\IOuter.cs" />
+    <Compile Include="LifesStyle\Tests\IX.cs" />
+    <Compile Include="LifesStyle\Tests\IdTrack.cs" />
+    <Compile Include="InterceptorLogging\Tests\LoggingTests.cs" />
+    <Compile Include="LifesStyle\Tests\LifeStyleWindsorTest.cs" />
+    <Compile Include="LifesStyle\Tests\Outer.cs" />
+    <Compile Include="LifesStyle\WindsorExtensions.cs" />
+    <Compile Include="LifesStyle\Tests\WindsorTestExtensions.cs" />
+    <Compile Include="LifesStyle\Tests\X.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
