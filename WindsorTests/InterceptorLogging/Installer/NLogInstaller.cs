@@ -2,8 +2,10 @@ using System;
 using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
+using WindsorTests.InterceptorLogging.Detail;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Installer
 {
     public class NLogInstaller : IWindsorInstaller
     {

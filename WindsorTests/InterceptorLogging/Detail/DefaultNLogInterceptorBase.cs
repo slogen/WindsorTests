@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Castle.DynamicProxy;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public abstract class DefaultNLogInterceptorBase<TKey> : NLogInterceptorBase<TKey>
     {
-        protected virtual object Format(object o) => o;
+        protected virtual object Format(object value) => value;
 
         protected override FormattableString EntryLogMessage(TKey callId, IInvocation invocation)
         {

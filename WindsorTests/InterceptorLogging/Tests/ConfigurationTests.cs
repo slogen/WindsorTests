@@ -56,7 +56,7 @@ namespace WindsorTests.InterceptorLogging.Tests
 
             public virtual void DoThrow()
             {
-                throw new InvalidOperationException("In DoThrow");
+                throw new InvalidOperationException($"In {nameof(DoThrow)}");
             }
         }
     }

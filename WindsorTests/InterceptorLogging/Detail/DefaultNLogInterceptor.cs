@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using Castle.DynamicProxy;
 using NLog;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public class DefaultNLogInterceptor<TKey> : DefaultNLogInterceptorBase<TKey>
     {
@@ -14,7 +16,7 @@ namespace WindsorTests.InterceptorLogging
 
         private LogLevel _returnLogLevel;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
+        [SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public DefaultNLogInterceptor(
             ILogIdentityFactory<TKey> keyFactory,
             ILogger logger = null,
@@ -70,16 +72,17 @@ namespace WindsorTests.InterceptorLogging
 
         public Func<TKey, DateTime, IInvocation, Exception, FormattableString> ExceptionFormattableString { get; set; }
         public IArgumentFormatter ArgumentFormatter { get; set; }
-        protected override object Format(object o)
+
+        protected override object Format(object value)
         {
             if (ReferenceEquals(ArgumentFormatter, null))
-                return base.Format(o);
-            var formatFor = ArgumentFormatter.For(o);
+                return base.Format(value);
+            var formatFor = ArgumentFormatter.Prepare(value);
             if (ReferenceEquals(formatFor, null))
-                return base.Format(o);
+                return base.Format(value);
             var fmt = formatFor.Format();
             if (ReferenceEquals(fmt, null))
-                return base.Format(o);
+                return base.Format(value);
             return fmt;
         }
 

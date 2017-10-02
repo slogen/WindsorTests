@@ -3,8 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 using Castle.DynamicProxy;
 using NLog;
 using NLog.Fluent;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public abstract class NLogInterceptorBase<TKey> : TraceInterceptor<TKey>, INLogInterceptor
     {
@@ -27,7 +28,10 @@ namespace WindsorTests.InterceptorLogging
             return invocation.Method.Name;
         }
 
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "invocation")]
         protected string FilePath(IInvocation invocation) => null;
+
+        [SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "invocation")]
         protected int LineNumber(IInvocation invocation) => 0;
 
         [SuppressMessage("ReSharper", "ExplicitCallerInfoArgument")]

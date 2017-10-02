@@ -70,20 +70,29 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="InterceptorLogging\ArgumentFormatter.cs" />
-    <Compile Include="InterceptorLogging\ILogIdentityFactory.cs" />
-    <Compile Include="InterceptorLogging\NLogConfigurator.cs" />
+    <Compile Include="InterceptorLogging\Formatter\NoFormatReady.cs" />
+    <Compile Include="InterceptorLogging\Installer\ArgumentFormatterWindsorInstaller.cs" />
+    <Compile Include="InterceptorLogging\Formatter\CombinedFormatter.cs" />
+    <Compile Include="InterceptorLogging\Formatter\DefaultDictionaryArgumentFormatter.cs" />
+    <Compile Include="InterceptorLogging\Formatter\DictionaryArgumentFormatter.cs" />
+    <Compile Include="InterceptorLogging\Interface\IArgumentFormatter.cs" />
+    <Compile Include="InterceptorLogging\Interface\IFormatReady.cs" />
+    <Compile Include="InterceptorLogging\Interface\ILogIdentityFactory.cs" />
+    <Compile Include="InterceptorLogging\Detail\NLogConfigurator.cs" />
+    <Compile Include="InterceptorLogging\Formatter\ObjectArgumentFormatter.cs" />
+    <Compile Include="InterceptorLogging\Formatter\SequenceFormatter.cs" />
     <Compile Include="InterceptorLogging\Tests\CompleteLoggingTests.cs" />
-    <Compile Include="InterceptorLogging\DefaultNLogInterceptor.cs" />
-    <Compile Include="InterceptorLogging\DefaultNLogInterceptorBase.cs" />
-    <Compile Include="InterceptorLogging\IDefaultNLogInterceptor.cs" />
-    <Compile Include="InterceptorLogging\INLogInterceptor.cs" />
-    <Compile Include="InterceptorLogging\LongIdentityFactory.cs" />
-    <Compile Include="InterceptorLogging\NLogInstaller.cs" />
-    <Compile Include="InterceptorLogging\NLogInterceptorBase.cs" />
-    <Compile Include="InterceptorLogging\NLogInterceptorDefaults.cs" />
+    <Compile Include="InterceptorLogging\Detail\DefaultNLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\Detail\DefaultNLogInterceptorBase.cs" />
+    <Compile Include="InterceptorLogging\Interface\IDefaultNLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\Interface\INLogInterceptor.cs" />
+    <Compile Include="InterceptorLogging\Detail\LongIdentityFactory.cs" />
+    <Compile Include="InterceptorLogging\Installer\NLogInstaller.cs" />
+    <Compile Include="InterceptorLogging\Detail\NLogInterceptorBase.cs" />
+    <Compile Include="InterceptorLogging\Detail\NLogInterceptorDefaults.cs" />
+    <Compile Include="InterceptorLogging\Tests\ArgumentFormatterTests.cs" />
     <Compile Include="InterceptorLogging\Tests\ConfigurationTests.cs" />
-    <Compile Include="InterceptorLogging\TraceInterceptor.cs" />
+    <Compile Include="InterceptorLogging\Detail\TraceInterceptor.cs" />
     <Compile Include="InterceptorLogging\WindsorNlogRegistration.cs" />
     <Compile Include="Lifestyle\BoundToAnyCapture.cs" />
     <Compile Include="Lifestyle\Tests\A.cs" />
@@ -117,6 +126,7 @@
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

@@ -6,6 +6,9 @@ using NLog;
 using NLog.Config;
 using NLog.Targets;
 using NUnit.Framework;
+using WindsorTests.InterceptorLogging.Detail;
+using WindsorTests.InterceptorLogging.Installer;
+using WindsorTests.InterceptorLogging.Interface;
 
 namespace WindsorTests.InterceptorLogging.Tests
 {
@@ -42,7 +45,7 @@ namespace WindsorTests.InterceptorLogging.Tests
 
         protected class TestTarget : Target
         {
-            public ICollection<LogEventInfo> LogEvents { get; } = new List<LogEventInfo>();
+            public IList<LogEventInfo> LogEvents { get; } = new List<LogEventInfo>();
 
             protected override void Write(LogEventInfo logEvent)
             {

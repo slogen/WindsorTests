@@ -1,6 +1,6 @@
 using NLog;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public static class NLogInterceptorDefaults
     {

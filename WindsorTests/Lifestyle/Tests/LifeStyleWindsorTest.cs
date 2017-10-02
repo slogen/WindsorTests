@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using FluentAssertions;
@@ -5,7 +6,7 @@ using NUnit.Framework;
 
 namespace WindsorTests.Lifestyle.Tests
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors")]
+    [SuppressMessage("Microsoft.Design", "CA1053:StaticHolderTypesShouldNotHaveConstructors")]
     public class LifestyleWindsorTest
     {
         [Test]
@@ -19,7 +20,7 @@ namespace WindsorTests.Lifestyle.Tests
             IdTrack.TotalUndisposedCount.Should().Be(tu);
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
+        [SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling")]
         private static void TestLifetimeBoundTo(IWindsorContainer cw)
         {
             cw.Register(

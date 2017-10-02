@@ -65,6 +65,7 @@ namespace WindsorTests.Lifestyle
 
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public ComponentRegistration<T> OfType<TBound1>() => Or<TBound1>().Final();
+
         [SuppressMessage("Microsoft.Design", "CA1004:GenericMethodsShouldProvideTypeParameter")]
         public ComponentRegistration<T> OfType<TBound1, TBound2>() => Or<TBound1>().Or<TBound2>().Final();
 

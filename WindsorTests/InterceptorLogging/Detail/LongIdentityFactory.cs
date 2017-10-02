@@ -1,13 +1,15 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public struct LongIdentityFactory : ILogIdentityFactory<long>
     {
         private long _nextId;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
+        [SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public LongIdentityFactory(long? firstId = null)
         {
             _nextId = firstId ?? DateTime.UtcNow.Ticks;

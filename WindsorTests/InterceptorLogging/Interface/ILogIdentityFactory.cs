@@ -1,4 +1,4 @@
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Interface
 {
     public interface ILogIdentityFactory<out TKey>
     {
