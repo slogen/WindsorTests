@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using Castle.DynamicProxy;
 using NLog;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public class DefaultNLogInterceptor<TKey> : DefaultNLogInterceptorBase<TKey>
     {
@@ -14,7 +16,7 @@ namespace WindsorTests.InterceptorLogging
 
         private LogLevel _returnLogLevel;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
+        [SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public DefaultNLogInterceptor(
             ILogIdentityFactory<TKey> keyFactory,
             ILogger logger = null,
@@ -23,7 +25,8 @@ namespace WindsorTests.InterceptorLogging
             LogLevel exceptionLogLevel = null,
             Func<TKey, IInvocation, FormattableString> entryLogMessage = null,
             Func<TKey, DateTime, IInvocation, object, FormattableString> returnLogMessage = null,
-            Func<TKey, DateTime, IInvocation, Exception, FormattableString> exceptionLogMessage = null
+            Func<TKey, DateTime, IInvocation, Exception, FormattableString> exceptionLogMessage = null,
+            IArgumentFormatter argumentFormatter = null
         )
         {
             Contract.Requires(!ReferenceEquals(keyFactory, null));
@@ -35,6 +38,7 @@ namespace WindsorTests.InterceptorLogging
             EntryFormattableString = entryLogMessage;
             ReturnFormattableString = returnLogMessage;
             ExceptionFormattableString = exceptionLogMessage;
+            ArgumentFormatter = argumentFormatter;
         }
 
         public Func<TKey, DateTime, IInvocation, object, FormattableString> ReturnFormattableString { get; set; }
@@ -67,6 +71,20 @@ namespace WindsorTests.InterceptorLogging
         public Func<TKey, IInvocation, FormattableString> EntryFormattableString { get; set; }
 
         public Func<TKey, DateTime, IInvocation, Exception, FormattableString> ExceptionFormattableString { get; set; }
+        public IArgumentFormatter ArgumentFormatter { get; set; }
+
+        protected override object Format(object value)
+        {
+            if (ReferenceEquals(ArgumentFormatter, null))
+                return base.Format(value);
+            var formatFor = ArgumentFormatter.Prepare(value);
+            if (ReferenceEquals(formatFor, null))
+                return base.Format(value);
+            var fmt = formatFor.Format();
+            if (ReferenceEquals(fmt, null))
+                return base.Format(value);
+            return fmt;
+        }
 
         protected override FormattableString EntryLogMessage(TKey callId, IInvocation invocation)
             => EntryFormattableString == null

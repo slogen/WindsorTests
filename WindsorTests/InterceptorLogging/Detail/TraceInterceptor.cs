@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Castle.DynamicProxy;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public abstract class TraceInterceptor<TKey> : IInterceptor
     {

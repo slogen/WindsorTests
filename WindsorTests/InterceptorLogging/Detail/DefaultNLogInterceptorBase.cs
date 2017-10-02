@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using Castle.DynamicProxy;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     public abstract class DefaultNLogInterceptorBase<TKey> : NLogInterceptorBase<TKey>
     {
+        protected virtual object Format(object value) => value;
+
         protected override FormattableString EntryLogMessage(TKey callId, IInvocation invocation)
         {
             if (ReferenceEquals(invocation, null))
                 throw new ArgumentNullException(nameof(invocation));
-            return $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments)})";
+            return $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments.Select(Format))})";
         }
 
         protected override FormattableString ReturnLogMessage(TKey callId, DateTime startTime, IInvocation invocation,
@@ -19,7 +21,7 @@ namespace WindsorTests.InterceptorLogging
         {
             if (ReferenceEquals(invocation, null))
                 throw new ArgumentNullException(nameof(invocation));
-            return $"[{callId}] {invocation.Method.Name}(...) = {value}";
+            return $"[{callId}] {invocation.Method.Name}(...) = {Format(value)}";
         }
 
         protected override FormattableString ExceptionLogMessage(TKey callId, DateTime startTime, IInvocation invocation,
@@ -28,7 +30,7 @@ namespace WindsorTests.InterceptorLogging
             if (ReferenceEquals(invocation, null))
                 throw new ArgumentNullException(nameof(invocation));
             return
-                $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments)}): {ExtractMessage(ex)}";
+                $"[{callId}] {invocation.Method.Name}({string.Join(", ", invocation.Arguments.Select(Format))}): {ExtractMessage(ex)}";
         }
 
         #region Helpers for string-conversions

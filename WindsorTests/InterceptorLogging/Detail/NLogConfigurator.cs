@@ -4,8 +4,9 @@ using System.Linq;
 using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using NLog;
+using WindsorTests.InterceptorLogging.Interface;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Detail
 {
     [SuppressMessage("Microsoft.Design", "CA1005:AvoidExcessiveParametersOnGenericTypes")]
     public class NLogConfigurator<T, TKey, TKeyFactory, TInterceptor>

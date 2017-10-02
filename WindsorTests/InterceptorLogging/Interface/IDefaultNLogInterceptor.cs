@@ -1,7 +1,7 @@
 using System;
 using Castle.DynamicProxy;
 
-namespace WindsorTests.InterceptorLogging
+namespace WindsorTests.InterceptorLogging.Interface
 {
     public interface IDefaultNLogInterceptor<TKey> : INLogInterceptor
     {

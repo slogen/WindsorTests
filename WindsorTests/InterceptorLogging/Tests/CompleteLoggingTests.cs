@@ -31,22 +31,22 @@ namespace WindsorTests.InterceptorLogging.Tests
             a.ShouldThrow<TaskCanceledException>();
             var expect = new[]
             {
-                "[1] FAsync(00:00:00.0100000, System.Threading.CancellationToken)",
-                "[2] GAsync(1, System.Threading.CancellationToken)",
+                "[1] FAsync(00:00:00.0100000, CancellationToken(can=True, is=False))",
+                "[2] GAsync(1, CancellationToken(can=True, is=False))",
                 "[2] GAsync(...) = 1",
                 "[1] FAsync(...) = 1",
-                "[3] FAsync(00:00:00.0500000, System.Threading.CancellationToken)",
-                "[4] GAsync(2, System.Threading.CancellationToken)",
-                "[4] GAsync(2, System.Threading.CancellationToken): One or more errors occurred. (GAsync(2) throws)",
-                "[3] FAsync(00:00:00.0500000, System.Threading.CancellationToken): One or more errors occurred. (GAsync(2) throws)",
-                "[5] FAsync(00:00:00.0500000, System.Threading.CancellationToken)",
-                "[6] GAsync(3, System.Threading.CancellationToken)",
+                "[3] FAsync(00:00:00.0500000, CancellationToken(can=True, is=False))",
+                "[4] GAsync(2, CancellationToken(can=True, is=False))",
+                "[4] GAsync(2, CancellationToken(can=True, is=False)): One or more errors occurred. (GAsync(2) throws)",
+                "[3] FAsync(00:00:00.0500000, CancellationToken(can=True, is=False)): One or more errors occurred. (GAsync(2) throws)",
+                "[5] FAsync(00:00:00.0500000, CancellationToken(can=True, is=False))",
+                "[6] GAsync(3, CancellationToken(can=True, is=False))",
                 "[6] GAsync(...) = 3",
                 "[5] FAsync(...) = 3",
-                "[7] FAsync(00:00:00.0500000, System.Threading.CancellationToken)",
-                "[8] GAsync(4, System.Threading.CancellationToken)",
-                "[8] GAsync(4, System.Threading.CancellationToken): A task was canceled.",
-                "[7] FAsync(00:00:00.0500000, System.Threading.CancellationToken): A task was canceled."
+                "[7] FAsync(00:00:00.0500000, CancellationToken(can=True, is=True))",
+                "[8] GAsync(4, CancellationToken(can=True, is=True))",
+                "[8] GAsync(4, CancellationToken(can=True, is=True)): A task was canceled.",
+                "[7] FAsync(00:00:00.0500000, CancellationToken(can=True, is=True)): A task was canceled."
             }.OrderBy(x => x).ToList();
             // We cannot rely strictly on the ordering of logging, since the logging async results can 
             // be reordered. So we sort the texts for efficient comparison
@@ -82,20 +82,20 @@ namespace WindsorTests.InterceptorLogging.Tests
 
             var expect = new[]
             {
-                "[1] F(00:00:00.0100000, System.Threading.CancellationToken)",
+                "[1] F(00:00:00.0100000, CancellationToken(can=False, is=False))",
                 "[2] G(1)",
                 "[2] G(...) = 1",
                 "[1] F(...) = 1",
-                "[3] F(00:00:00.0500000, System.Threading.CancellationToken)",
+                "[3] F(00:00:00.0500000, CancellationToken(can=False, is=False))",
                 "[4] G(2)",
                 "[4] G(2): G(2) throws",
-                "[3] F(00:00:00.0500000, System.Threading.CancellationToken): G(2) throws",
-                "[5] F(00:00:00.0500000, System.Threading.CancellationToken)",
+                "[3] F(00:00:00.0500000, CancellationToken(can=False, is=False)): G(2) throws",
+                "[5] F(00:00:00.0500000, CancellationToken(can=False, is=False))",
                 "[6] G(3)",
                 "[6] G(...) = 3",
                 "[5] F(...) = 3",
-                "[7] F(00:00:00.0500000, System.Threading.CancellationToken)",
-                "[7] F(00:00:00.0500000, System.Threading.CancellationToken): The operation was canceled."
+                "[7] F(00:00:00.0500000, CancellationToken(can=True, is=True))",
+                "[7] F(00:00:00.0500000, CancellationToken(can=True, is=True)): The operation was canceled."
             }.Select(msg => new {FormattedMessage = msg}).ToList();
             Target.LogEvents
                 .ShouldBeEquivalentTo(expect, cfg => cfg.ExcludingMissingMembers().WithStrictOrdering());
