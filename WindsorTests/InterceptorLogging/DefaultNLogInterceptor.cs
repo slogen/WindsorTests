@@ -23,7 +23,8 @@ namespace WindsorTests.InterceptorLogging
             LogLevel exceptionLogLevel = null,
             Func<TKey, IInvocation, FormattableString> entryLogMessage = null,
             Func<TKey, DateTime, IInvocation, object, FormattableString> returnLogMessage = null,
-            Func<TKey, DateTime, IInvocation, Exception, FormattableString> exceptionLogMessage = null
+            Func<TKey, DateTime, IInvocation, Exception, FormattableString> exceptionLogMessage = null,
+            IArgumentFormatter argumentFormatter = null
         )
         {
             Contract.Requires(!ReferenceEquals(keyFactory, null));
@@ -35,6 +36,7 @@ namespace WindsorTests.InterceptorLogging
             EntryFormattableString = entryLogMessage;
             ReturnFormattableString = returnLogMessage;
             ExceptionFormattableString = exceptionLogMessage;
+            ArgumentFormatter = argumentFormatter;
         }
 
         public Func<TKey, DateTime, IInvocation, object, FormattableString> ReturnFormattableString { get; set; }
@@ -67,6 +69,19 @@ namespace WindsorTests.InterceptorLogging
         public Func<TKey, IInvocation, FormattableString> EntryFormattableString { get; set; }
 
         public Func<TKey, DateTime, IInvocation, Exception, FormattableString> ExceptionFormattableString { get; set; }
+        public IArgumentFormatter ArgumentFormatter { get; set; }
+        protected override object Format(object o)
+        {
+            if (ReferenceEquals(ArgumentFormatter, null))
+                return base.Format(o);
+            var formatFor = ArgumentFormatter.For(o);
+            if (ReferenceEquals(formatFor, null))
+                return base.Format(o);
+            var fmt = formatFor.Format();
+            if (ReferenceEquals(fmt, null))
+                return base.Format(o);
+            return fmt;
+        }
 
         protected override FormattableString EntryLogMessage(TKey callId, IInvocation invocation)
             => EntryFormattableString == null

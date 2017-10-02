@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="InterceptorLogging\ArgumentFormatter.cs" />
     <Compile Include="InterceptorLogging\ILogIdentityFactory.cs" />
     <Compile Include="InterceptorLogging\NLogConfigurator.cs" />
     <Compile Include="InterceptorLogging\Tests\CompleteLoggingTests.cs" />

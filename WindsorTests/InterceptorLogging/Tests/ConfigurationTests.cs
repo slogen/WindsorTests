@@ -39,7 +39,7 @@ namespace WindsorTests.InterceptorLogging.Tests
         public void LogLevelsShouldApplyWhenCallingThrowing()
         {
             Action a = () => _foo.DoThrow();
-            a.ShouldThrow<Exception>();
+            a.ShouldThrow<InvalidOperationException>().And.Message.Should().Be("In DoThrow");
             Target.LogEvents.ShouldBeEquivalentTo(new[]
             {
                 new {LogLevel = LogLevel.Fatal},
@@ -56,7 +56,7 @@ namespace WindsorTests.InterceptorLogging.Tests
 
             public virtual void DoThrow()
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("In DoThrow");
             }
         }
     }

@@ -13,6 +13,7 @@ namespace WindsorTests.InterceptorLogging
         {
             if (ReferenceEquals(container, null))
                 throw new ArgumentNullException(nameof(container));
+            container.Install(ArgumentFormatterWindsorInstaller.Default);
             container.Register(
                 Component.For(typeof(ILogIdentityFactory<long>))
                     .ImplementedBy<LongIdentityFactory>()
