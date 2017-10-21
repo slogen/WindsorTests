@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractWindsorContainerPerTest.cs" />
+    <Compile Include="FactoryOwnership\FactoryOwnershipTests.cs" />
     <Compile Include="ForwardTypeAndInterfaceRegistrations\ForwardBetweenTypeAndInterfaceRegistrationsTests.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="InterceptorLogging\Formatter\NoFormatReady.cs" />
