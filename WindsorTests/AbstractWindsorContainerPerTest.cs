@@ -12,16 +12,16 @@ namespace WindsorTests
     {
         protected abstract IWindsorContainer CreateWindsorContainer();
         private IWindsorContainer _windsorContainer;
-        protected IWindsorContainer WindsorContainer
+        protected IWindsorContainer WindsorContainer => _windsorContainer ?? (_windsorContainer = CreateWindsorContainer());
+
+        protected void ClearContainer()
         {
-            get
-            {
-                return _windsorContainer ?? (_windsorContainer = CreateWindsorContainer());
-            }
+            _windsorContainer?.Dispose();
+            _windsorContainer = null;
         }
         [SetUp]
-        public void SetUp() { _windsorContainer = null; }
+        public void SetUp() { ClearContainer(); }
         [TearDown]
-        public void TearDown() { _windsorContainer?.Dispose(); }
+        public void TearDown() { ClearContainer(); }
     }
 }
