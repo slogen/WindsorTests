@@ -21,7 +21,7 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
         {
             int CommandTag { get; }
         }
-        [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+        [AttributeUsage(AttributeTargets.Class, Inherited = false)]
         public class CommandHandlerAttribute : Attribute
         {
             public int CommandTag { get; }
@@ -53,9 +53,15 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
             {
             }
 
-            public void Register(int commandType, Type handlerType)
+            public bool TryRegister(int commandType, Type handlerType)
+                => _registeredHandlers.TryAdd(commandType, handlerType);
+
+            public bool TryRegister(Type handlerType)
             {
-                _registeredHandlers[commandType] = handlerType;
+                var a = handlerType.GetCustomAttribute<CommandHandlerAttribute>(inherit: true);
+                if (a != null)
+                    TryRegister(a.CommandTag, handlerType);
+                return a != null;
             }
 
             protected override Type GetComponentType(MethodInfo method, object[] arguments)
@@ -67,19 +73,9 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
             }
         }
 
-        public class HandlerBase : IHandler
+        public class SpecificCommand : ICommand
         {
-            public ICommand Command { get; }
-            public HandlerBase(ICommand command)
-            {
-                Command = command;
-            }
-            public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
-        }
-
-        public class Command : ICommand
-        {
-            public Command(int commandTag)
+            public SpecificCommand(int commandTag)
             {
                 CommandTag = commandTag;
             }
@@ -109,13 +105,7 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
                     container.Register(
                         _searchHandlers.Select(fromDescriptor =>
                                 fromDescriptor.BasedOn<IHandler>()
-                                    .If(t =>
-                                    {
-                                        var a = t.GetCustomAttribute<CommandHandlerAttribute>();
-                                        if (a != null)
-                                            HandlerFactorySelector.Register(a.CommandTag, t);
-                                        return a != null;
-                                    })
+                                    .If(t => HandlerFactorySelector.TryRegister(t))
                                     .WithServiceAllInterfaces()
                                     .WithServiceSelf()
                                     .Configure(c => c.LifestyleTransient().IsFallback()))
@@ -135,18 +125,21 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
         public class Handler0CommandTests : HandlerByCommandTagTests
         {
             [CommandHandler(0)]
-            public class Handler0 : HandlerBase
+            public class Handler0 : IHandler
             {
-                public Handler0(ICommand command) : base(command)
+                public ICommand Command { get; }
+                public Handler0(ICommand command)
                 {
+                    Command = command;
                 }
+                public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
             }
 
             [Test]
             public void DispatchCommand0ToCommand0Handler()
             {
                 var hf = WindsorContainer.Resolve<IHandlerFactory>();
-                var cmd = new Command(0);
+                var cmd = new SpecificCommand(0);
                 var handler = hf.ForCommand(cmd);
                 handler
                     .Should().BeOfType<Handler0>()
@@ -155,32 +148,33 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
 
             [Test]
             public void Command0HandlerRegisteredToIHandler()
-                => WindsorContainer.Resolve<IHandler>(new {command = new Command(0)})
+                => WindsorContainer.Resolve<IHandler>(new {command = new SpecificCommand(0)})
                     .Should().BeOfType<Handler0>();
 
             [Test]
             public void Command0HandlerRegisteredToHandler0()
-                => WindsorContainer.Resolve<Handler0>(new {command = new Command(0)})
+                => WindsorContainer.Resolve<Handler0>(new {command = new SpecificCommand(0)})
                     .Should().BeOfType<Handler0>();
         }
 
         public class Handler1CommandTests : HandlerByCommandTagTests
         {
 
-
             [CommandHandler(1)]
-            public class Handler1 : HandlerBase
+            public class Handler1 : IHandler
             {
-                public Handler1(ICommand command) : base(command)
+                public ICommand Command { get; }
+                public Handler1(ICommand command)
                 {
+                    Command = command;
                 }
+                public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
             }
-
             [Test]
             public void DispatchCommand1ToCommand1Handler()
             {
                 var hf = WindsorContainer.Resolve<IHandlerFactory>();
-                var cmd = new Command(1);
+                var cmd = new SpecificCommand(1);
                 var handler = hf.ForCommand(cmd);
                 handler
                     .Should().BeOfType<Handler1>()
@@ -195,7 +189,7 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
             public void DispatchCommand2ToNoHandler()
             {
                 var hf = WindsorContainer.Resolve<IHandlerFactory>();
-                var cmd = new Command(2);
+                var cmd = new SpecificCommand(2);
                 Action a = () => hf.ForCommand(cmd);
                 a.ShouldThrow<Exception>();
             }
