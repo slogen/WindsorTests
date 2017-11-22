@@ -105,8 +105,8 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
                     container.Register(
                         _searchHandlers.Select(fromDescriptor =>
                                 fromDescriptor.BasedOn<IHandler>()
-                                    .If(t => HandlerFactorySelector.TryRegister(t))
-                                    .WithServiceAllInterfaces()
+                                    .If(HandlerFactorySelector.TryRegister)
+                                    .WithServiceFromInterface(typeof(IHandler))
                                     .WithServiceSelf()
                                     .Configure(c => c.LifestyleTransient().IsFallback()))
                                     .Cast<IRegistration>()
