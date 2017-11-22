@@ -4,7 +4,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Castle.Core;
+using Castle.DynamicProxy;
 using Castle.Facilities.TypedFactory;
+using Castle.MicroKernel;
 using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
@@ -17,6 +20,8 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
 
     public class HandlerByCommandTagTests : AbstractWindsorContainerPerTest
     {
+        protected static CancellationToken CancellationToken => default(CancellationToken);
+
         public interface ICommand
         {
             int CommandTag { get; }
@@ -37,9 +42,10 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
             Task Execute(CancellationToken cancellationToken);
         }
 
-        public interface IHandlerFactory
+        public interface IHandlerFactory: IDisposable
         {
             IHandler ForCommand(ICommand command);
+            void Release(IHandler handler);
         }
 
         public class HandlerFactorySelector : DefaultTypedFactoryComponentSelector
@@ -85,6 +91,61 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
 
         public class Installer : IWindsorInstaller
         {
+            // BUG: This releaser does *not* cause IDisposable invocation when using TypedFactory!
+            public class ReleaseHandlerImmediatelyAfterExecuteInterceptor : IInterceptor
+            {
+                private static readonly MethodInfo Execute = typeof(IHandler).GetMethod("Execute");
+                private readonly IKernel _kernel;
+
+                private static MethodInfo GetInterfaceMethod(Type implementingClass, Type implementedInterface, MethodInfo classMethod)
+                {
+                    if (classMethod.DeclaringType == implementedInterface)
+                        return classMethod;
+                    var map = implementingClass.GetInterfaceMap(implementedInterface);
+                    var index = Array.IndexOf(map.TargetMethods, classMethod);
+                    return map.InterfaceMethods[index];
+                }
+                public ReleaseHandlerImmediatelyAfterExecuteInterceptor(IKernel kernel)
+                {
+                    this._kernel = kernel;
+                }
+                public void Intercept(IInvocation invocation)
+                {
+                    var mi = GetInterfaceMethod(invocation.TargetType, typeof(IHandler), invocation.Method);
+                    if (mi != Execute)
+                    {
+                        invocation.Proceed();
+                        return;
+                    }
+
+                    if (typeof(Task).IsAssignableFrom(invocation.Method.ReturnType))
+                    {
+                        try
+                        {
+                            invocation.Proceed();
+                            var returnValue = (Task) invocation.ReturnValue;
+                            invocation.ReturnValue = returnValue.ContinueWith(t =>
+                            {
+                                _kernel.ReleaseComponent(invocation.Proxy);
+                            });
+                        }
+                        catch
+                        {
+                            _kernel.ReleaseComponent(invocation.Proxy);
+                        }
+                        return;
+                    }
+
+                    try
+                    {
+                        invocation.Proceed();
+                    }
+                    finally
+                    {
+                        _kernel.ReleaseComponent(invocation.Proxy);
+                    }
+                }
+            }
             public HandlerFactorySelector HandlerFactorySelector { get; } = new HandlerFactorySelector();
             private readonly FromDescriptor[] _searchHandlers;
 
@@ -96,6 +157,7 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
             public void Install(IWindsorContainer container, IConfigurationStore store)
             {
                 container.Register(
+                    Component.For<ReleaseHandlerImmediatelyAfterExecuteInterceptor>().LifestyleTransient(),
                     Component.For<HandlerFactorySelector>().Instance(HandlerFactorySelector),
                     Component.For<IHandlerFactory>().LifestyleSingleton()
                         .AsFactory(c => c.SelectedWith<HandlerFactorySelector>())
@@ -108,7 +170,10 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
                                     .If(HandlerFactorySelector.TryRegister)
                                     .WithServiceFromInterface(typeof(IHandler))
                                     .WithServiceSelf()
-                                    .Configure(c => c.LifestyleTransient().IsFallback()))
+                                    .Configure(c => 
+                                        c.LifeStyle.Is(LifestyleType.Transient)
+                                            .Interceptors<ReleaseHandlerImmediatelyAfterExecuteInterceptor>()
+                                            ))
                                     .Cast<IRegistration>()
                             .ToArray());
                 }
@@ -125,60 +190,91 @@ namespace WindsorTests.HandlerDispatching.ByCommandTag
         public class Handler0CommandTests : HandlerByCommandTagTests
         {
             [CommandHandler(0)]
-            public class Handler0 : IHandler
+            public class Handler0 : IHandler, IDisposable
             {
                 public ICommand Command { get; }
                 public Handler0(ICommand command)
                 {
                     Command = command;
                 }
-                public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
+                Task IHandler.Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
+                public bool Disposed { get; private set; }
+                public void Dispose() { Disposed = true; }
             }
 
             [Test]
-            public void DispatchCommand0ToCommand0Handler()
+            public async Task DispatchCommand0ToCommand0Handler()
             {
                 var hf = WindsorContainer.Resolve<IHandlerFactory>();
                 var cmd = new SpecificCommand(0);
+                Handler0 handler0;
                 var handler = hf.ForCommand(cmd);
-                handler
-                    .Should().BeOfType<Handler0>()
-                    .Which.Command.Should().BeSameAs(cmd);
+                try
+                {
+                    handler
+                        .Should().BeAssignableTo<Handler0>()
+                        .Which.Command.Should().BeSameAs(cmd);
+                    handler0 = (Handler0) handler;
+                    handler0.Disposed.Should().BeFalse();
+                    await handler.Execute(CancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    hf.Release(handler);
+                }
+                handler0.Disposed.Should().BeTrue();
             }
 
             [Test]
             public void Command0HandlerRegisteredToIHandler()
                 => WindsorContainer.Resolve<IHandler>(new {command = new SpecificCommand(0)})
-                    .Should().BeOfType<Handler0>();
+                    .Should().BeAssignableTo<Handler0>();
 
             [Test]
             public void Command0HandlerRegisteredToHandler0()
                 => WindsorContainer.Resolve<Handler0>(new {command = new SpecificCommand(0)})
-                    .Should().BeOfType<Handler0>();
+                    .Should().BeAssignableTo<Handler0>();
         }
 
         public class Handler1CommandTests : HandlerByCommandTagTests
         {
 
             [CommandHandler(1)]
-            public class Handler1 : IHandler
+            public class Handler1 : IHandler, IDisposable
             {
                 public ICommand Command { get; }
+
                 public Handler1(ICommand command)
                 {
                     Command = command;
                 }
-                public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
+
+                public virtual Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
+                public bool Disposed { get; private set; }
+                public void Dispose() { Disposed = true; }
             }
+
             [Test]
-            public void DispatchCommand1ToCommand1Handler()
+            public async Task DispatchCommand1ToCommand1HandlerAndVerifyExecutionTerminatesLifetime()
             {
                 var hf = WindsorContainer.Resolve<IHandlerFactory>();
                 var cmd = new SpecificCommand(1);
+                Handler1 handler1;
                 var handler = hf.ForCommand(cmd);
-                handler
-                    .Should().BeOfType<Handler1>()
-                    .Which.Command.Should().BeSameAs(cmd);
+                try
+                {
+                    handler
+                        .Should().BeAssignableTo<Handler1>()
+                        .Which.Command.Should().BeSameAs(cmd);
+                    handler1 = (Handler1) handler;
+                    handler1.Disposed.Should().BeFalse();
+                    await handler1.Execute(CancellationToken).ConfigureAwait(false);
+                }
+                finally
+                {
+                    hf.Release(handler);
+                }
+                handler1.Disposed.Should().BeTrue();
             }
         }
 
