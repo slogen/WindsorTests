@@ -16,8 +16,10 @@ namespace WindsorTests.HandlerDispatching.ByCommandType
     {
         Task Execute(CancellationToken cancellationToken);
     }
-    [SuppressMessage("ReSharper", "TypeParameterCanBeVariant", Justification = "Handler selection is done on exact command type")]
-    public interface IHandler<TCommand>: IHandler
+
+    [SuppressMessage("ReSharper", "TypeParameterCanBeVariant",
+        Justification = "Handler selection is done on exact command type")]
+    public interface IHandler<TCommand> : IHandler
     {
         TCommand Command { get; }
     }
@@ -30,8 +32,8 @@ namespace WindsorTests.HandlerDispatching.ByCommandType
     public class HandlerFactorySelector : DefaultTypedFactoryComponentSelector
     {
         public HandlerFactorySelector(
-            bool getMethodsResolveByName = true, 
-            bool fallbackToResolveByTypeIfNameNotFound = true) 
+            bool getMethodsResolveByName = true,
+            bool fallbackToResolveByTypeIfNameNotFound = true)
             : base(getMethodsResolveByName, fallbackToResolveByTypeIfNameNotFound)
         {
         }
@@ -43,13 +45,15 @@ namespace WindsorTests.HandlerDispatching.ByCommandType
             return componentType;
         }
     }
+
     public class HandlerBase<TCommand> : IHandler<TCommand>
     {
-        public TCommand Command { get; }
         public HandlerBase(TCommand command)
         {
             Command = command;
         }
+
+        public TCommand Command { get; }
         public Task Execute(CancellationToken cancellationToken) => Task.FromResult(Command);
     }
 
@@ -60,31 +64,61 @@ namespace WindsorTests.HandlerDispatching.ByCommandType
             .AddFacility<TypedFactoryFacility>()
             .Register(
                 Component.For<HandlerFactorySelector>().LifestyleSingleton(),
-                Component.For<IHandlerFactory>().LifestyleSingleton().AsFactory(c => c.SelectedWith<HandlerFactorySelector>()),
+                Component.For<IHandlerFactory>()
+                    .LifestyleSingleton()
+                    .AsFactory(c => c.SelectedWith<HandlerFactorySelector>()),
                 Types.FromAssemblyContaining(GetType())
                     .BasedOn(typeof(IHandler<>))
                     .WithService.FromInterface(typeof(IHandler<>))
                     .Configure(c => c.LifestyleTransient().IsFallback())
             );
 
+        [Test]
+        public void DispatchCommand0ToCommand0Handler()
+        {
+            var hf = WindsorContainer.Resolve<IHandlerFactory>();
+            var cmd = new Command0("a");
+            var handler = hf.ForCommand(cmd);
+            handler
+                .Should().BeOfType<Handler0>()
+                .Which.Command.Should().BeSameAs(cmd);
+        }
+
+        [Test]
+        public void DispatchCommand1ToCommand1Handler()
+        {
+            var hf = WindsorContainer.Resolve<IHandlerFactory>();
+            var cmd = new Command1();
+            var handler = hf.ForCommand(cmd);
+            handler
+                .Should().BeOfType<Handler1>()
+                .Which.Command.Should().BeSameAs(cmd);
+        }
+
+        [Test]
+        public void DispatchCommand2ToNoHandler()
+        {
+            var hf = WindsorContainer.Resolve<IHandlerFactory>();
+            var cmd = new Command2();
+            Action a = () => hf.ForCommand(cmd);
+            a.ShouldThrow<ComponentRegistrationException>();
+        }
+
         public class Command0
         {
+            public string Foo;
+
+            public Command0(string foo)
+            {
+                Foo = foo;
+            }
         }
+
         public class Handler0 : HandlerBase<Command0>
         {
             public Handler0(Command0 command) : base(command)
             {
             }
-        }
-        [Test]
-        public void DispatchCommand0ToCommand0Handler()
-        {
-            var hf = WindsorContainer.Resolve<IHandlerFactory>();
-            var cmd = new Command0();
-            var handler = hf.ForCommand(cmd);
-            handler
-                .Should().BeOfType<Handler0>()
-                .Which.Command.Should().BeSameAs(cmd);
         }
 
 
@@ -98,27 +132,9 @@ namespace WindsorTests.HandlerDispatching.ByCommandType
             {
             }
         }
-        [Test]
-        public void DispatchCommand1ToCommand1Handler()
-        {
-            var hf = WindsorContainer.Resolve<IHandlerFactory>();
-            var cmd = new Command1();
-            var handler = hf.ForCommand(cmd);
-            handler
-                .Should().BeOfType<Handler1>()
-                .Which.Command.Should().BeSameAs(cmd);
-        }
 
         public class Command2
         {
-        }
-        [Test]
-        public void DispatchCommand2ToNoHandler()
-        {
-            var hf = WindsorContainer.Resolve<IHandlerFactory>();
-            var cmd = new Command2();
-            Action a = () => hf.ForCommand(cmd);
-            a.ShouldThrow<ComponentRegistrationException>();
         }
     }
 }

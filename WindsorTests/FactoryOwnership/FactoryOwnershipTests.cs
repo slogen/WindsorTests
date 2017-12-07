@@ -5,55 +5,13 @@ using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using FluentAssertions;
 using NUnit.Framework;
+
 // ReSharper disable RedundantArgumentDefaultValue
 
 namespace WindsorTests.FactoryOwnership
 {
     public class FactoryOwnershipTests : AbstractWindsorContainerPerTest
     {
-        public static class Name
-        {
-            public const string ManagedExternally = nameof(ManagedExternally);
-            public const string ManagedInternally = nameof(ManagedInternally);
-            public const string ByFactory = nameof(ByFactory);
-            public const string Factory = nameof(Factory);
-        }
-
-        public interface IFoo: IDisposable
-        {
-            int Id { get; }
-            int DisposeCount { get; }
-        }
-        public class Foo : IFoo
-        {
-            public Foo(int id)
-            {
-                Id = id;
-            }
-
-            public int Id { get; }
-            public override bool Equals(object obj)
-            {
-                var foo = obj as Foo;
-                return (foo != null) && foo.Id == Id;
-            }
-            public override int GetHashCode() => Id;
-            private int _disposeCount;
-
-            public void Dispose()
-            {
-                Interlocked.Increment(ref _disposeCount);
-            }
-
-            public int DisposeCount => _disposeCount;
-        }
-
-        public interface IFooFactory: IDisposable
-        {
-            IFoo GetByFactory();
-            void Release(IFoo foo);
-        }
-
         protected override IWindsorContainer CreateWindsorContainer()
         {
             var c = new WindsorContainer();
@@ -90,6 +48,7 @@ namespace WindsorTests.FactoryOwnership
             var foo = WindsorContainer.Resolve<IFoo>(Name.ManagedExternally);
             WasLastReference(ref foo).Should().BeTrue();
         }
+
         [Test]
         public void DisposingContainerShouldNotDisposeExternallyManagedObjects()
         {
@@ -98,12 +57,14 @@ namespace WindsorTests.FactoryOwnership
             foo.DisposeCount.Should().Be(0);
             WasLastReference(ref foo).Should().BeTrue();
         }
+
         [Test]
         public void ContainerShouldKeepInternallyManageObjectsAlive()
         {
             var foo = WindsorContainer.Resolve<IFoo>(Name.ManagedInternally);
             WasLastReference(ref foo).Should().BeFalse();
         }
+
         [Test]
         public void DisposingContainerShouldDisposeInternallyManagedObjects()
         {
@@ -112,6 +73,7 @@ namespace WindsorTests.FactoryOwnership
             foo.DisposeCount.Should().Be(1);
             WasLastReference(ref foo).Should().BeTrue();
         }
+
         [Test]
         public void TypedFactoryShouldTrackProducts()
         {
@@ -119,6 +81,7 @@ namespace WindsorTests.FactoryOwnership
             var foo = fooFactory.GetByFactory();
             WasLastReference(ref foo).Should().BeFalse();
         }
+
         [Test]
         public void TypedFactoryShouldDisposeAndUntrackProductsWhenTheyAreExplicitlyReleased()
         {
@@ -128,6 +91,7 @@ namespace WindsorTests.FactoryOwnership
             foo.DisposeCount.Should().Be(1);
             WasLastReference(ref foo).Should().BeTrue();
         }
+
         [Test]
         public void TypedFactoryShouldDisposeAndUntrackProductsWhenTheFactoryIsDisposed()
         {
@@ -137,6 +101,7 @@ namespace WindsorTests.FactoryOwnership
             foo.DisposeCount.Should().Be(1);
             WasLastReference(ref foo).Should().BeTrue();
         }
+
         [Test]
         public void TypedFactoryShouldDisposeAndUntrackProductsWhenTheFactoryIsReleased()
         {
@@ -145,6 +110,53 @@ namespace WindsorTests.FactoryOwnership
             WindsorContainer.Release(fooFactory);
             foo.DisposeCount.Should().Be(1);
             WasLastReference(ref foo).Should().BeTrue();
+        }
+
+        public static class Name
+        {
+            public const string ManagedExternally = nameof(ManagedExternally);
+            public const string ManagedInternally = nameof(ManagedInternally);
+            public const string ByFactory = nameof(ByFactory);
+            public const string Factory = nameof(Factory);
+        }
+
+        public interface IFoo : IDisposable
+        {
+            int Id { get; }
+            int DisposeCount { get; }
+        }
+
+        public class Foo : IFoo
+        {
+            private int _disposeCount;
+
+            public Foo(int id)
+            {
+                Id = id;
+            }
+
+            public int Id { get; }
+
+            public void Dispose()
+            {
+                Interlocked.Increment(ref _disposeCount);
+            }
+
+            public int DisposeCount => _disposeCount;
+
+            public override bool Equals(object obj)
+            {
+                var foo = obj as Foo;
+                return foo != null && foo.Id == Id;
+            }
+
+            public override int GetHashCode() => Id;
+        }
+
+        public interface IFooFactory : IDisposable
+        {
+            IFoo GetByFactory();
+            void Release(IFoo foo);
         }
     }
 }
