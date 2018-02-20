@@ -81,6 +81,8 @@
   <ItemGroup>
     <Compile Include="AbstractWindsorContainerPerTest.cs" />
     <Compile Include="EFTransactions\Tests\ExplicitSingleTransactionsTest.cs" />
+    <Compile Include="HandlerDispatching\ByTTag\HandlerByTTagTests.cs" />
+    <Compile Include="SqlDep\SqlDep.cs" />
     <Compile Include="Util\Persist\EF\DbContextUnitOfWorkBase.cs" />
     <Compile Include="Util\Persist\EF\DbContextUnitOfWork.cs" />
     <Compile Include="Util\Persist\EF\DbSetRepository.cs" />
