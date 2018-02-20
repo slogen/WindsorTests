@@ -62,6 +62,19 @@ namespace WindsorTests.HandlerDispatching.ByTTag
     #endregion
 
     #region Windsor
+    public static class WindsorUsingExtensions
+    {
+        public static TResult Using<TResult, TResource>(
+            this IWindsorContainer container,
+            Func<TResource, TResult> f)
+            where TResource: class
+        {
+            return F.Func(container.Resolve<TResource>)
+                .UsedWith(container.Release,
+                f);
+        }
+    }
+
     public interface ITagHandlerFactory: IDisposable
     {
         object HandlerFor<TArg>(Type tagType, object tag, Type handlerType, TArg arg);
@@ -100,6 +113,23 @@ namespace WindsorTests.HandlerDispatching.ByTTag
             this ITagHandlerFactory tagHandlerFactory,
             TTag tag, TArg arg, Func<THandler, TResult> f)
             => tagHandlerFactory.Handler<THandler>().UsedFor(tag, arg, f);
+
+        public static TResult UsingHandler<TTag, TArg, THandler, TResult>(
+            this IWindsorContainer container,
+            TTag tag,
+            TArg arg, Func<THandler, TResult> f)
+            => container.Using((ITagHandlerFactory thf) => 
+                    thf.UsingHandler(tag, arg, f));
+        public static TResult UsingHandler<TTag, TArg, THandler, TResult>(
+            this IWindsorContainer container,
+            TArg arg, Func<TArg, TTag> extractTag, Func<THandler, TResult> f)
+            => container.UsingHandler(extractTag(arg), arg, f);
+        public static TResult UsingHandler<TArg, THandler, TResult>(
+            this IWindsorContainer container,
+            TArg arg, Func<THandler, TResult> f)
+            where TArg: ICommand<Guid>
+            => container.UsingHandler(arg, x => x.Tag, f);
+
     }
     public class TagHandlerFactorySelector :
         DefaultTypedFactoryComponentSelector,
@@ -165,6 +195,7 @@ namespace WindsorTests.HandlerDispatching.ByTTag
             // Noop
         }
     }
+
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = true)]
     public class TagHandlerAttribute : Attribute
     {
@@ -187,7 +218,7 @@ namespace WindsorTests.HandlerDispatching.ByTTag
                 Component.For<TagHandlerFactorySelector>()
                     .DependsOn(Dependency.OnComponent("registeredHandlers", "registeredHandlers"))
                     .LifestyleTransient(),
-                Component.For<ITagHandlerFactory>().LifestyleSingleton()
+                Component.For<ITagHandlerFactory>().LifestyleTransient()
                     .AsFactory(c => c.SelectedWith<TagHandlerFactorySelector>())
             );
         }
@@ -239,9 +270,11 @@ namespace WindsorTests.HandlerDispatching.ByTTag
                                     fd.If(t =>
                                     {
                                         var thi = TagHandlerInfo.ByTagHandlerAttribute(t);
-                                        return thi != null &&
-                                               thfs.TryRegister(thi.TagType, thi.Tag, t);
-                                    })
+                                        if (thi == null)
+                                            return false;
+                                        thfs.Register(thi.TagType, thi.Tag, t);
+                                        return true;
+                                        })
                                         .LifestyleTransient()
                                         .WithServiceSelf())
                                 .Cast<IRegistration>()
@@ -251,40 +284,9 @@ namespace WindsorTests.HandlerDispatching.ByTTag
 
     #endregion
 
-    public interface ISomeHandler
+    public interface ICommand<TTag>
     {
-        object Arg { get; }
-        int Execute();
-    }
-    [TagHandler(typeof(ISomeHandler), "SomeTag")]
-    public abstract class SomeHandler : ISomeHandler
-    {
-        public abstract int Execute();
-        public abstract object Arg { get; }
-    }
-
-    public class AlarmResetCommand
-    {
-        public string S { get; }
-        public int I { get; }
-
-        public AlarmResetCommand(string s, int i)
-        {
-            S = s;
-            I = i;
-        }
-    }
-
-    public class AlarmResetHandler : SomeHandler
-    {
-        public AlarmResetCommand FooArg { get; }
-        public override object Arg => FooArg;
-        public static Guid SomeTag { get; } = Guid.Parse("aab89c3c-effa-4ef8-a3ca-7f72ac781035");
-        public AlarmResetHandler(AlarmResetCommand arg)
-        {
-            FooArg = arg;
-        }
-        public override int Execute() => 1;
+        TTag Tag { get; }
     }
 
 
@@ -296,16 +298,57 @@ namespace WindsorTests.HandlerDispatching.ByTTag
         {
             return new WindsorContainer()
                 .AddFacility<TypedFactoryFacility>()
-                .Install(new Installer())
-                .RegisterByTagHandlerAttribute(Types.FromThisAssembly().BasedOn<ISomeHandler>());
+                .Install(new Installer());
         }
-
-
     }
 
 
-    public class HandlerDispatchTest : HandlerByTTagTests
+    public class HandlerShouldDispatchBasedOnCommand : HandlerByTTagTests
     {
+        protected override IWindsorContainer CreateWindsorContainer()
+        {
+            return base.CreateWindsorContainer()
+                .RegisterByTagHandlerAttribute(Types.FromThisAssembly().BasedOn<ISomeHandler>());
+        }
+        public interface ISomeHandler
+        {
+            object Arg { get; }
+            int Execute();
+        }
+        [TagHandler(typeof(ISomeHandler), "SomeTag")]
+        public abstract class SomeHandler : ISomeHandler
+        {
+            public abstract int Execute();
+            public abstract object Arg { get; }
+        }
+
+        public class AlarmResetCommand : ICommand<Guid>
+        {
+            public static Guid SorType = Guid.Parse("aab89c3c-effa-4ef8-a3ca-7f72ac781035");
+            public Guid Tag => SorType;
+            public string S { get; }
+            public int I { get; }
+
+            public AlarmResetCommand(string s, int i)
+            {
+                S = s;
+                I = i;
+            }
+        }
+
+        public class AlarmResetHandler : SomeHandler
+        {
+            public AlarmResetCommand Command { get; }
+            public override object Arg => Command;
+            public static Guid SomeTag { get; } = AlarmResetCommand.SorType;
+            public AlarmResetHandler(AlarmResetCommand arg)
+            {
+                Command = arg;
+            }
+            public override int Execute() => 1;
+        }
+
+
         [Test]
         public void DispatchAlarmCommandShouldBeResolvedDynamicallyToCorrectHandler()
         {
@@ -314,24 +357,59 @@ namespace WindsorTests.HandlerDispatching.ByTTag
             ISomeHandler gotHandler = null;
             // Setup request for specific action
             var arg = new AlarmResetCommand("a", 2);
-            var got = F.Func(WindsorContainer.Resolve<ITagHandlerFactory>)
-                .UsedWith(
-                    WindsorContainer.Release,
-                    hf =>
-                    {
-                        var tag = AlarmResetHandler.SomeTag;
-                        return hf.UsingHandler(tag, arg, (ISomeHandler h) =>
+            var got = WindsorContainer.UsingHandler(
+                    arg,
+                    (ISomeHandler h) =>
                         {
                             gotArg = h.Arg;
                             gotHandler = h;
                             return h.Execute();
                         });
-                    });
-            // Result of execution
-            got.Should().Be(1);
+            // The right handler should be selected
+            gotHandler.Should().BeOfType<AlarmResetHandler>();
             // Argument properly transferred
             gotArg.Should().BeSameAs(arg);
-            gotHandler.Should().BeOfType<AlarmResetHandler>();
+            // Result of execution should be as expected by AlarmResetHandler
+            got.Should().Be(1);
+        }
+    }
+
+    public class HandlerUpdatesDynamically: HandlerByTTagTests
+    {
+        interface I
+        {
+            string DoStuff();
+        }
+        public class A {
+            public static readonly Guid Tag = Guid.Parse("81066cb4-1979-4598-ae9e-7b895a0da9f9");
+        }
+        [TagHandler(typeof(I), "Tag")]
+        public class A1: I {
+            public static Guid Tag => A.Tag;
+            public string DoStuff() => "A1";
+        }
+        [TagHandler(typeof(I), "Tag")]
+        public class A2 : I {
+            public static Guid Tag => A.Tag;
+            public string DoStuff() => "A2";
+        }
+        protected override IWindsorContainer CreateWindsorContainer()
+        {
+            return base.CreateWindsorContainer()
+                .RegisterByTagHandlerAttribute(Types.FromThisAssembly().BasedOn<I>().If(t => t == typeof(A1)));
+        }
+        [Test]
+        public void DynamicUpdateOfHandlerShouldBeSupportedAndLatestRegisteredShouldWin() {
+            string arg = null;
+            WindsorContainer
+                .UsingHandler(A.Tag, arg, (I h) => { h.Should().BeOfType<A1>(); return h.DoStuff(); })
+                .Should().Be("A1");
+
+            WindsorContainer.RegisterByTagHandlerAttribute(Types.FromThisAssembly().BasedOn<I>().If(t => t == typeof(A2)));
+
+            WindsorContainer
+                .UsingHandler(A.Tag, arg, (I h) => { h.Should().BeOfType<A2>(); return h.DoStuff(); })
+                .Should().Be("A2");
         }
     }
 }
