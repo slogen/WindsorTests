@@ -19,13 +19,13 @@ namespace WindsorTests
         }
 
         [SetUp]
-        public void SetUp()
+        public virtual void SetUp()
         {
             ClearContainer();
         }
 
         [TearDown]
-        public void TearDown()
+        public virtual void TearDown()
         {
             ClearContainer();
         }
