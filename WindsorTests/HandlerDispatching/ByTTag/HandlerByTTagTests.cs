@@ -15,6 +15,8 @@ using Castle.Windsor;
 using FluentAssertions;
 using NUnit.Framework;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace WindsorTests.HandlerDispatching.ByTTag
 {
@@ -172,7 +174,30 @@ namespace WindsorTests.HandlerDispatching.ByTTag
             }
             return false;
         }
-
+        protected override IDictionary GetArguments(MethodInfo method, object[] arguments)
+        {
+            return base.GetArguments(method, arguments);
+        }
+        protected override Func<IKernelInternal, IReleasePolicy, object> BuildFactoryComponent(MethodInfo method, string componentName, Type componentType, IDictionary additionalArguments)
+        {
+            // TODO: Don't rely on name here -- this code is ugly and makes lots of assumtions that should not be there!
+            // TODO: Dont copy this code anywhere!
+            var argName = "arg";
+            object arg = additionalArguments[argName];
+            var parameterType = componentType.GetConstructors().Single().GetParameters()[0].ParameterType;
+            if (!ReferenceEquals(null, arg)
+                && parameterType != typeof(JObject)
+                && arg is JObject)
+            {
+                var jarg = (JObject)arg;
+                additionalArguments["arg"] = jarg.ToObject(parameterType);
+            }
+            return base.BuildFactoryComponent(method, componentName, componentType, additionalArguments);
+        }
+        protected override string GetComponentName(MethodInfo method, object[] arguments)
+        {
+            return base.GetComponentName(method, arguments);
+        }
         protected override Type GetComponentType(MethodInfo method, object[] arguments)
         {
             var tagType = (Type)arguments[0];
@@ -412,4 +437,40 @@ namespace WindsorTests.HandlerDispatching.ByTTag
                 .Should().Be("A2");
         }
     }
+
+    public class HandlerDeserializeOnCreation : HandlerByTTagTests
+    {
+        interface I
+        {
+            string DoStuff();
+        }
+        public class ACommand
+        {
+            public string Stuff { get; set; }
+        }
+        [TagHandler(typeof(I), "Tag")]
+        public class A : I
+        {
+            public static Guid Tag { get; } = Guid.Parse("81066cb4-1979-4598-ae9e-7b895a0da9f9");
+            ACommand Arg;
+            public A(ACommand arg) { Arg = arg; }
+            public string DoStuff() => Arg.Stuff;
+        }
+        protected override IWindsorContainer CreateWindsorContainer()
+        {
+            return base.CreateWindsorContainer()
+                .RegisterByTagHandlerAttribute(Types.FromThisAssembly().BasedOn<I>());
+        }
+        [Test]
+        public void DynamicUpdateOfHandlerShouldBeSupportedAndLatestRegisteredShouldWin()
+        {
+            var acmd = new ACommand { Stuff = "CommandStuff" };
+            var acmdJson = JsonConvert.SerializeObject(acmd);
+            var acmdJsonObject = JsonConvert.DeserializeObject(acmdJson);
+            WindsorContainer
+                .UsingHandler(A.Tag, acmdJsonObject, (I h) => { h.Should().BeOfType<A>(); return h.DoStuff(); })
+                .Should().Be(acmd.Stuff);
+        }
+    }
+
 }
