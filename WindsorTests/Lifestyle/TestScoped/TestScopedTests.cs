@@ -19,7 +19,6 @@ using NUnit.Framework.Internal;
 
 namespace WindsorTests.Lifestyle.Tests
 {
-    [TestScoped]
     class TestScopedTests : AbstractWindsorContainerPerTest
     {
         class DisposeCount : IDisposable
@@ -35,17 +34,13 @@ namespace WindsorTests.Lifestyle.Tests
             DisposeCountTestInstance = WindsorContainer.Resolve<DisposeCount>();
             WindsorContainer.Resolve<DisposeCount>().Should().BeSameAs(DisposeCountTestInstance);
         }
-        [Test]
-        public void TestScopedShouldFollowEachTestInvocationEvenWithoutTag()
-        {
-            DisposeCountTestInstance = WindsorContainer.Resolve<DisposeCount>();
-            WindsorContainer.Resolve<DisposeCount>().Should().BeSameAs(DisposeCountTestInstance);
-        }
         DisposeCount DisposeCountTestInstance;
 
         [TearDown]
         override public void TearDown()
         {
+            DisposeCountTestInstance.Count.Should().Be(0);
+            TestScopeAccessor.Release();
             DisposeCountTestInstance.Count.Should().Be(1);
             base.TearDown();
         }
@@ -99,9 +94,13 @@ namespace WindsorTests.Lifestyle.Tests
         {
             base.Dispose(disposing);
             // Unregistration is not handled through Dispose. Make accidental caller aware of that
-            //throw new InvalidOperationException("Dispose through TestScopeAccessor.Release");
+            throw new InvalidOperationException("Dispose through TestScopeAccessor.Release");
         }
-        public void Release() => base.Dispose(true);
+        public void Release()
+        {
+            GC.SuppressFinalize(this);
+            base.Dispose(true);
+        }
     }
     public class TestScopeAccessor : IScopeAccessor
     {
@@ -117,7 +116,7 @@ namespace WindsorTests.Lifestyle.Tests
         public ILifetimeScope GetScope(CreationContext context)
             => 
             _testScopes.GetOrAdd(TestContext.CurrentContext.Test.ID, id => new TestLifeTimeScope(id));
-        public static bool Release(string id)
+        protected static bool Release(string id)
         {
             TestLifeTimeScope scope;
             var found = _testScopes.TryRemove(id, out scope);
@@ -133,19 +132,4 @@ namespace WindsorTests.Lifestyle.Tests
             where T: class
             => registration.LifestyleScoped<TestScopeAccessor>(); 
     }
-
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface | AttributeTargets.Method)]
-    public class TestScopedAttribute : Attribute, ITestAction
-    {
-        public ActionTargets Targets => ActionTargets.Test
-            | ActionTargets.Suite;
-        public void AfterTest(ITest test)
-        {
-            TestScopeAccessor.Release(test.Id);
-        }
-
-        public void BeforeTest(ITest test) { }
-    }
-    [TestScoped]
-    public interface ITestScoping { }
 }
